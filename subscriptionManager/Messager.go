@@ -1,3 +1,6 @@
+// Package subscriptionManager manages subscriptions to documents and enables real-time notifications to clients
+// when documents are updated. It provides the necessary structures to add subscribers, notify them of changes, 
+// and maintain these active subscriptions within a Messager object.
 package subscriptionManager
 
 import (
@@ -6,6 +9,7 @@ import (
 	"log/slog"
 )
 
+// SubscriptionManager manages a list of subscribers to a document
 type UriToDocs[uri string, docSubs *SubscriptionManager] interface {
 	Upsert(key string, check index_utils.UpdateCheck[uri, docSubs]) (updated bool, err error) // Upserts (inserts or updates) a subscriber.
 	Find(key string) (foundDsm *SubscriptionManager, found bool)
@@ -13,18 +17,19 @@ type UriToDocs[uri string, docSubs *SubscriptionManager] interface {
 
 // Messager contains all active subscriptions
 type Messager struct {
-	idtosubfactory IdToSubFactory
-
-	docSubs UriToDocs[string, *SubscriptionManager]
+	idtosubfactory IdToSubFactory // Factory function for creating a new IdToSub
+	docSubs UriToDocs[string, *SubscriptionManager] // Map of document URIs to their SubscriptionManagers
 }
 
 // IdToSubFactory is a factory function for
 type IdToSubFactory func() IdToSub[string, *chan []byte]
 
+// NewMessager creates a new Messager instance with the given IdToSubFactory and UriToDocs.
+// It returns a pointer to the new Messager.
 func NewMessager(idtosubfactory IdToSubFactory, docsubs UriToDocs[string, *SubscriptionManager]) *Messager {
 	return &Messager{
-		idtosubfactory: idtosubfactory,
-		docSubs:        docsubs,
+		idtosubfactory: idtosubfactory, // Factory function for creating a new IdToSub
+		docSubs:        docsubs, // Map of document URIs to their SubscriptionManagers
 	}
 }
 

@@ -57,7 +57,7 @@
 				
 				<option value="file0">github.com/RICE-COMP318-FALL24/owldb-p1group24/auth/auth.go (85.5%)</option>
 				
-				<option value="file1">github.com/RICE-COMP318-FALL24/owldb-p1group24/concurrentSkipList/concurrentSkipList.go (89.9%)</option>
+				<option value="file1">github.com/RICE-COMP318-FALL24/owldb-p1group24/concurrentSkipList/concurrentSkipList.go (94.7%)</option>
 				
 				<option value="file2">github.com/RICE-COMP318-FALL24/owldb-p1group24/db/db.go (100.0%)</option>
 				
@@ -99,11 +99,11 @@
 				
 				<option value="file21">github.com/RICE-COMP318-FALL24/owldb-p1group24/server/deletehandlers.go (66.7%)</option>
 				
-				<option value="file22">github.com/RICE-COMP318-FALL24/owldb-p1group24/server/gethandlers.go (52.7%)</option>
+				<option value="file22">github.com/RICE-COMP318-FALL24/owldb-p1group24/server/gethandlers.go (53.0%)</option>
 				
 				<option value="file23">github.com/RICE-COMP318-FALL24/owldb-p1group24/server/server.go (100.0%)</option>
 				
-				<option value="file24">github.com/RICE-COMP318-FALL24/owldb-p1group24/server/serverutils.go (91.8%)</option>
+				<option value="file24">github.com/RICE-COMP318-FALL24/owldb-p1group24/server/serverutils.go (91.5%)</option>
 				
 				<option value="file25">github.com/RICE-COMP318-FALL24/owldb-p1group24/subscriptionManager/ColSubscriptionManager.go (63.9%)</option>
 				
@@ -356,7 +356,7 @@ type Skiplist[K cmp.Ordered, V any] struct {
 // Returns a pointer to the newly created skiplist
 func NewSL[K cmp.Ordered, V any](minkey K, maxkey K) *Skiplist[K, V] <span class="cov8" title="1">{
 
-        dummyHead := node[K, V]{}
+        dummyHead := node[K, V]{} 
 
         dummyHead.key = minkey
 
@@ -370,17 +370,18 @@ func NewSL[K cmp.Ordered, V any](minkey K, maxkey K) *Skiplist[K, V] <span class
 
         dummyTail.key = maxkey
 
-        dummyTail.nexts = make([]atomic.Pointer[node[K, V]], 8)
+        dummyTail.nexts = make([]atomic.Pointer[node[K, V]], 8) //prealloc saves memory and space
 
-        dummyTail.marked.Store(false)
+        dummyTail.marked.Store(false) 
 
-        dummyTail.topLevel = 8
+        dummyTail.topLevel = 8 
 
+    // Initialize the head and tail nodes
         for i := 0; i &lt; 8; i++ </span><span class="cov8" title="1">{
-                dummyHead.nexts[i].Store(&amp;dummyTail)
-                dummyTail.nexts[i].Store(nil)
+                dummyHead.nexts[i].Store(&amp;dummyTail) 
+                dummyTail.nexts[i].Store(nil) 
         }</span>
-
+    // Initialize the skiplist
         <span class="cov8" title="1">var sl Skiplist[K, V] = Skiplist[K, V]{
                 minK: minkey,
                 maxK: maxkey,
@@ -664,20 +665,20 @@ func (sl *Skiplist[K, V]) Remove(key K) (removedVal V, removed bool) <span class
                         <span class="cov8" title="1">valid = !pred.marked.Load() &amp;&amp; (pred.nexts[level].Load() == victim)
                         level += 1</span>
                 }
-                <span class="cov8" title="1">if !valid </span><span class="cov0" title="0">{ //release all locks
+                <span class="cov8" title="1">if !valid </span><span class="cov8" title="1">{ //release all locks
 
                         unlockLevel := highestLocked
                         var lastUnlocked *node[K, V]
                         var predd *node[K, V]
-                        for unlockLevel &gt;= 0 </span><span class="cov0" title="0">{
+                        for unlockLevel &gt;= 0 </span><span class="cov8" title="1">{
                                 predd = preds[unlockLevel].Load()
-                                if lastUnlocked != predd </span><span class="cov0" title="0">{
+                                if lastUnlocked != predd </span><span class="cov8" title="1">{
                                         predd.mtx.Unlock()
                                         lastUnlocked = predd
                                 }</span>
-                                <span class="cov0" title="0">unlockLevel -= 1</span>
+                                <span class="cov8" title="1">unlockLevel -= 1</span>
                         }
-                        <span class="cov0" title="0">continue</span>
+                        <span class="cov8" title="1">continue</span>
 
                 }
 
@@ -1123,6 +1124,7 @@ func (db *Database[K, T]) DeleteDoc(docpath string) ([]byte, int) <span class="c
 }
 
 // deleteTop handles the case where the topmost document must be deleted
+// Returns a response and status code indicating the outcome of the operation.
 func (db *Database[K, T]) deleteTop(docpath string) ([]byte, int) <span class="cov8" title="1">{
 
         slog.Debug(fmt.Sprintf("deleting the top document,resource path is %s", docpath))
@@ -1172,6 +1174,7 @@ func (db *Database[K, T]) Patch(docPath string, patches []byte, user string) ([]
 }
 
 // Patch applies a JSON patch to the document at the specified path
+// and returns a response indicating the outcome of the operation.        
 func (db *Database[K, T]) patchTop(docName string, patch []byte, user string) ([]byte, int) <span class="cov8" title="1">{
 
         var nullDoc T
@@ -1220,6 +1223,8 @@ func (db *Database[K, T]) patchTop(docName string, patch []byte, user string) ([
 }
 
 // generatePatchResponse generates a response for a patch operation.
+// The response includes the URI of the patched document, a flag indicating whether the patch failed,
+// and a message describing the outcome of the operation.
 func generatePatchResponse(dbName string, docPath string, patchFailed bool, msg string) []byte <span class="cov8" title="1">{
 
         uri := "/v1/" + dbName + "/" + docPath
@@ -2706,21 +2711,21 @@ import (
 
 // PatchVisitor applies a single patch operation to a JSONValue during traversal.
 type PatchVisitor struct {
-        Patch         PatchOperation
-        CurrentPath   string
-        Failed        bool
-        FailureReason string
-        pathFound     bool
+        Patch         PatchOperation // The patch operation to apply
+        CurrentPath   string // The current path in the JSON document
+        Failed        bool // Flag indicating if the patch operation failed
+        FailureReason string // Reason for the failure
+        pathFound     bool // Flag indicating if the path was found in the document
 }
 
 // NewPatchVisitor creates a new PatchVisitor for a single patch operation.
 func NewPatchVisitor(patch PatchOperation) *PatchVisitor <span class="cov8" title="1">{
         return &amp;PatchVisitor{
-                Patch:         patch,
-                CurrentPath:   "",
-                Failed:        false,
-                FailureReason: "",
-                pathFound:     false,
+                Patch:         patch, // The patch operation to apply
+                CurrentPath:   "", // The current path in the JSON document
+                Failed:        false, // Flag indicating if the patch operation failed
+                FailureReason: "", // Reason for the failure
+                pathFound:     false, // Flag indicating if the path was found in the document
         }
 }</span>
 
@@ -2806,10 +2811,8 @@ func (pv *PatchVisitor) Map(m map[string]jsondata.JSONValue) (jsondata.JSONValue
 }
 
 // Slice applies ArrayAdd and ArrayRemove operations.
-
 // Slice processes a JSON array by iterating through its elements.
 // Returns the updated JSONValue and an error if the operation fails.
-
 func (pv *PatchVisitor) Slice(s []jsondata.JSONValue) (jsondata.JSONValue, error) <span class="cov8" title="1">{
         slog.Info("PATCHING 3")
         newSlice := make([]jsondata.JSONValue, len(s))
@@ -3294,6 +3297,7 @@ type Getdatabaser interface {
         GetColSerial(colpath string, lo string, hi string, isSubscription bool) (payload []byte, stat_code int, subChan *chan []byte, subId string, docEvents [][]byte)
 }
 
+// DatabaseIndex represents indices for our databases
 type DatabaseIndex[K string, V Getdatabaser] interface {
         Find(key K) (foundValue V, found bool)
 }
@@ -3306,6 +3310,7 @@ func New[K string, V Getdatabaser](dbs DatabaseIndex[K, V]) *ResourceGetterServi
         return &amp;ResourceGetterService[K, V]{dbs: dbs}
 }</span>
 
+// GetCol retrieves the top-level database in the path, and then delegates the call to a Getdatabase (if found)
 func (rgs *ResourceGetterService[K, T]) GetCol(dtb string, colpath string, lower string, upper string, mode bool) (payload []byte, statCode int, subChan *chan []byte, subId string, docEvents [][]byte) <span class="cov8" title="1">{
 
         if mode </span><span class="cov0" title="0">{
@@ -3321,6 +3326,7 @@ func (rgs *ResourceGetterService[K, T]) GetCol(dtb string, colpath string, lower
         <span class="cov0" title="0">return db.GetColSerial(colpath, lower, upper, mode)</span>
 }
 
+// GetDoc gets a document by first retrieving the database it belongs to, and forwarding the request at the path pathstr to the database
 func (rgs *ResourceGetterService[K, T]) GetDoc(dtb string, pathstr string, subscription bool) (response []byte, statCode int, subCh *chan []byte, id string, docEvent []byte) <span class="cov8" title="1">{
 
         if subscription </span><span class="cov0" title="0">{
@@ -3399,8 +3405,10 @@ import (
         "net/http"
 )
 
+// loginHandler processes user login requests.
+// It reads the JSON body containing a username and returns an authentication token upon successful login.
 func (dbh *DbHarness) loginhandler(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
-
+        //read body from request
         body, err := io.ReadAll(r.Body)
         defer r.Body.Close()
         if err != nil </span><span class="cov0" title="0">{
@@ -3409,7 +3417,7 @@ func (dbh *DbHarness) loginhandler(w http.ResponseWriter, r *http.Request) <span
                 return
 
         }</span>
-
+        //constructing data
         <span class="cov8" title="1">var data struct {
                 Username string `json:"username"`
         }
@@ -3437,6 +3445,8 @@ func (dbh *DbHarness) loginhandler(w http.ResponseWriter, r *http.Request) <span
         writeResponse(w, http.StatusOK, response)</span>
 }
 
+// logoutHandler processes user logout requests.
+// It reads the Authorization header to extract the bearer token and logs the user out if the token is valid.
 func (dbh *DbHarness) logoutHandler(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
         defer r.Body.Close()
         slog.Info("Delete Handler - Checking Authorization Header")
@@ -3482,7 +3492,8 @@ import (
         "strings"
 )
 
-// putHandler dispatches PUT requests based on the end of the path; a terminating slash will redirect to collections, and documents otherwise
+// putHandler dispatches PUT requests based on the end of the path;
+// a terminating slash will redirect to collections, and documents otherwise
 func (dbh *DbHarness) putHandler(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
 
         resource := r.PathValue("resource")
@@ -3503,7 +3514,8 @@ func (dbh *DbHarness) putHandler(w http.ResponseWriter, r *http.Request) <span c
         }</span>
 }
 
-// createDBHandler handles requests to create databases
+// createDBHandler handles requests to create databases.
+// Validates the URL path and the bearer token from the Authorization header. If valid, it creates the database.
 func (dbh *DbHarness) createDBHandler(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
         defer r.Body.Close()
         patherr := validateUrl(r.URL.Path) //validates path
@@ -3545,7 +3557,8 @@ func (dbh *DbHarness) createDBHandler(w http.ResponseWriter, r *http.Request) <s
         <span class="cov0" title="0">writeResponse(w, status, response)</span>
 }
 
-// putDocHandler handles putting new documents
+// putDocHandler handles requests for creating or updating documents in a database.
+// Validates the document path, JSON body, and the bearer token before proceeding with the operation.
 func (dbh *DbHarness) putDocHandler(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
         defer r.Body.Close()
         patherr := validateUrl(r.URL.Path)
@@ -3629,7 +3642,8 @@ func (dbh *DbHarness) putDocHandler(w http.ResponseWriter, r *http.Request) <spa
         <span class="cov8" title="1">writeResponse(w, status, response)</span>
 }
 
-// postDocHandler handles all operations related to posting
+// postDocHandler handles operations related to posting new documents into a collection.
+// It ensures the URL path is valid, checks the bearer token, and validates the JSON body before proceeding.
 func (dbh *DbHarness) postDocHandler(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
         defer r.Body.Close()
 
@@ -3690,7 +3704,8 @@ func (dbh *DbHarness) postDocHandler(w http.ResponseWriter, r *http.Request) <sp
 
 }
 
-// putColHandler processes put operations on collections
+// putColHandler processes PUT requests for collections.
+// It validates the collection path and the bearer token, then attempts to create or update the collection.
 func (dbh *DbHarness) putColHandler(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
         defer r.Body.Close()
         patherr := validateUrl(r.URL.Path)
@@ -3721,7 +3736,8 @@ func (dbh *DbHarness) putColHandler(w http.ResponseWriter, r *http.Request) <spa
                 writeResponse(w, http.StatusUnauthorized, errmsg)
                 return
         }</span>
-
+        // If valid, it proceeds with the collection operation.
+        // Returns a 201 Created status upon success or an appropriate error status otherwise.
         <span class="cov8" title="1">resp, stat, uri := dbh.rc.PutCol(dtb, colpath)
         if stat == http.StatusCreated </span><span class="cov8" title="1">{
                 w.Header().Set("Location", uri)
@@ -3731,9 +3747,11 @@ func (dbh *DbHarness) putColHandler(w http.ResponseWriter, r *http.Request) <spa
         <span class="cov0" title="0">writeResponse(w, stat, resp)</span>
 }
 
-// patchDocHanlder handles patch requests by parsing the url and forwarding them to the resourcepatcher service
+// patchDocHandler processes PATCH requests for documents.
+// It validates the document path, JSON body, and the bearer token before forwarding the request to the patching service.
 func (dbh *DbHarness) patchDocHanlder(writer http.ResponseWriter, request *http.Request) <span class="cov8" title="1">{
         defer request.Body.Close()
+        // Validates the URL path, JSON body, and Authorization header.
         writer.Header().Set("Access-Control-Allow-Origin", "*")
         writer.Header().Set("Content-Type", "application/json")
         path := request.PathValue("resource")
@@ -3785,7 +3803,10 @@ func (dbh *DbHarness) patchDocHanlder(writer http.ResponseWriter, request *http.
 }
 </pre>
 		
-		<pre class="file" id="file21" style="display: none">package server
+		<pre class="file" id="file21" style="display: none">// Package server provides the handlers for DELETE requests to OwlDB. 
+// It supports deletion of databases, collections, and documents, and ensures request validation, 
+// token authentication, and response formatting.
+package server
 
 import (
         "encoding/json"
@@ -3793,7 +3814,7 @@ import (
         "strings"
 )
 
-// deleteHandler parses the resource path and dispatches requests accordingly
+// deleteHandler parses the resource path and dispatches requests accordingly 
 func (dbh *DbHarness) deleteHandler(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
         resource := r.PathValue("resource")
         if len(resource) == 0 </span><span class="cov0" title="0">{ //empty strings are not allowed
@@ -3813,16 +3834,19 @@ func (dbh *DbHarness) deleteHandler(w http.ResponseWriter, r *http.Request) <spa
         }</span>
 }
 
-// deleteColHandler handles delete requests to collections
+// deleteColHandler handles DELETE requests to remove a collection from a specified database.
+// It validates the resource path, extracts the Bearer token, and checks the token's validity before performing the deletion.
 func (dbh *DbHarness) deleteColHandler(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
         defer r.Body.Close()
         patherr := validateUrl(r.URL.Path)
-
+    //validating the path
         if patherr != nil </span><span class="cov0" title="0">{
                 errmsg, _ := json.Marshal(patherr.Error())
                 writeResponse(w, http.StatusBadRequest, errmsg)
                 return
+        
         }</span>
+        // Extract and validate the Bearer token
         <span class="cov8" title="1">token, err := extractToken(r.Header)
         if err != nil </span><span class="cov8" title="1">{
                 errmsg, _ := json.Marshal(err.Error())
@@ -3835,6 +3859,7 @@ func (dbh *DbHarness) deleteColHandler(w http.ResponseWriter, r *http.Request) <
                 writeResponse(w, http.StatusUnauthorized, errmsg)
                 return
         }</span>
+        // Parse the resource path and validate
         <span class="cov8" title="1">resourcePath := r.PathValue("resource")
         dbName, colpath := parseResourcePath(resourcePath)
         err = validateColPath(colpath)
@@ -3851,16 +3876,17 @@ func (dbh *DbHarness) deleteColHandler(w http.ResponseWriter, r *http.Request) <
         writeResponse(w, status, response)</span>
 }
 
-// deleteDocHandler handles deletions for documents
+// deleteDocHandler handles DELETE requests to remove a document from a specified database and collection.
 func (dbh *DbHarness) deleteDocHandler(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
         defer r.Body.Close()
         patherr := validateUrl(r.URL.Path)
-
+ //validating the path
         if patherr != nil </span><span class="cov0" title="0">{
                 errmsg, _ := json.Marshal(patherr.Error())
                 writeResponse(w, http.StatusBadRequest, errmsg)
                 return
         }</span>
+        // Extract and validate the Bearer token
         <span class="cov8" title="1">token, err := extractToken(r.Header)
         if err != nil </span><span class="cov8" title="1">{
                 emg, e := json.Marshal("Invalid or Expired Bearer token")
@@ -3871,6 +3897,7 @@ func (dbh *DbHarness) deleteDocHandler(w http.ResponseWriter, r *http.Request) <
                 <span class="cov8" title="1">writeResponse(w, http.StatusUnauthorized, emg)
                 return</span>
         }
+        // Authenticate the token
 
         <span class="cov8" title="1">_, autherr := dbh.auth.ValidateSession(token)
         if autherr != nil </span><span class="cov0" title="0">{
@@ -3881,6 +3908,7 @@ func (dbh *DbHarness) deleteDocHandler(w http.ResponseWriter, r *http.Request) <
         <span class="cov8" title="1">path := r.PathValue("resource")
         dbName, docpath := parseResourcePath(path)
         err = validateDocPath(docpath)
+        // Validate the document path
         if err != nil </span><span class="cov0" title="0">{
                 errmsg, _ := json.Marshal(err.Error())
                 writeResponse(w, http.StatusBadRequest, errmsg)
@@ -3926,7 +3954,9 @@ func (dbh *DbHarness) deleteDBHandler(w http.ResponseWriter, r *http.Request) <s
 }
 </pre>
 		
-		<pre class="file" id="file22" style="display: none">package server
+		<pre class="file" id="file22" style="display: none">// This package supports document and collection retrieval, streaming server-sent events (SSE) for subscribers, 
+// and request preprocessing for validation and token extraction.
+package server
 
 import (
         "bytes"
@@ -3938,13 +3968,16 @@ import (
         "time"
 )
 
-// a writeFlusher is the composition of an http.ResponseWriter and the http.Flusher. Needed for SSEs
+// writeFlusher is an interface that composes http.ResponseWriter and http.Flusher. 
+// It is used for Server-Sent Events (SSE) to send event data and flush/send the response to the client.
 type writeFlusher interface {
-        http.ResponseWriter
-        http.Flusher
+        http.ResponseWriter // write response to client 
+        http.Flusher //  flush response to client
 }
 
-// getHandler dispatches get requests depending on whether they end with a /
+// getHandler is responsible for dispatching GET requests based on the URL path structure.
+// If the path represents a document, it delegates to getDocHandler. If it represents a collection, 
+// it delegates to getColHandler. If the path is malformed, it returns a 400 Bad Request response.
 func (dbh *DbHarness) getHandler(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
         resource := r.PathValue("resource")
         if len(resource) == 0 </span><span class="cov0" title="0">{
@@ -3964,6 +3997,8 @@ func (dbh *DbHarness) getHandler(w http.ResponseWriter, r *http.Request) <span c
         }</span>
 }
 
+// getDocHandler handles requests made to retrieve documents in the database.
+// It extracts and validates the Bearer token, validates the document path, and handles subscription requests.
 func (dbh *DbHarness) getDocHandler(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
         defer r.Body.Close()
         patherr := validateUrl(r.URL.Path)
@@ -3973,6 +4008,7 @@ func (dbh *DbHarness) getDocHandler(w http.ResponseWriter, r *http.Request) <spa
                 writeResponse(w, http.StatusBadRequest, errmsg)
                 return
         }</span>
+        // Extract and validate the Bearer token
         <span class="cov8" title="1">token, err := extractToken(r.Header)
         if err != nil </span><span class="cov0" title="0">{
                 ermsg, _ := json.Marshal("Missing or invalid bearer token")
@@ -3991,11 +4027,12 @@ func (dbh *DbHarness) getDocHandler(w http.ResponseWriter, r *http.Request) <spa
         subscribe := (mode == "subscribe")
         if mode != "" </span><span class="cov8" title="1">{
                 if !validateSubscribe(mode) </span><span class="cov8" title="1">{
-                        writeError(w, http.StatusBadRequest, fmt.Errorf("malformed mode query parameter"))
+                        emsg, _ := json.Marshal("malformed subscribe parameter")
+                        writeResponse(w, http.StatusBadRequest, emsg)
                         return
                 }</span>
         }
-
+    // Parse the document path and validate
         <span class="cov8" title="1">path := r.PathValue("resource")
         dtb, docpath := parseResourcePath(path)
         err = validateDocPath(docpath)
@@ -4008,11 +4045,14 @@ func (dbh *DbHarness) getDocHandler(w http.ResponseWriter, r *http.Request) <spa
                 <span class="cov8" title="1">writeResponse(w, http.StatusBadRequest, errmsg)
                 return</span>
         }
+
+        // Retrieve the document and handle the response or subscription
         <span class="cov8" title="1">response, status, subChan, _, docEv := dbh.rg.GetDoc(dtb, docpath, subscribe)
         if status != http.StatusOK </span><span class="cov0" title="0">{
                 writeResponse(w, status, response)
                 return
         }</span>
+        // If subscription is requested, send events via SSE
         <span class="cov8" title="1">if subscribe &amp;&amp; status == http.StatusOK </span><span class="cov0" title="0">{
                 wf, ok := w.(writeFlusher)
                 if !ok </span><span class="cov0" title="0">{
@@ -4031,7 +4071,7 @@ func (dbh *DbHarness) getDocHandler(w http.ResponseWriter, r *http.Request) <spa
 
                 slog.Info("Sending", "msg", evt.String())
 
-                // Send event
+                // Continuously send events or keep the connection alive
                 wf.Write(evt.Bytes())
                 wf.Flush()
                 ticker := time.NewTicker(15 * time.Second)
@@ -4062,6 +4102,8 @@ func (dbh *DbHarness) getDocHandler(w http.ResponseWriter, r *http.Request) <spa
         <span class="cov8" title="1">writeResponse(w, status, response)</span>
 }
 
+// getColHandler handles requests made to retrieve collections in the database.
+// It extracts and validates the Bearer token, validates the collection path, and handles subscription requests.
 func (dbh *DbHarness) getColHandler(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
         defer r.Body.Close()
         slog.Info(fmt.Sprintf("Request headers: %+v", r.Context()))
@@ -4188,7 +4230,7 @@ func (dbh *DbHarness) getColHandler(w http.ResponseWriter, r *http.Request) <spa
 }
 </pre>
 		
-		<pre class="file" id="file23" style="display: none">// Package server Description: This file contains the implementation of the HTTP server that serves the API.
+		<pre class="file" id="file23" style="display: none">// This file contains the implementation of the HTTP server that serves the API.
 package server
 
 import (
@@ -4196,27 +4238,31 @@ import (
         "net/http"
 )
 
+// resourceCreator is an interface that defines the methods for creating resources in OwlDB.
 type resourceCreator interface {
-        PostDoc(dbName string, colpath string, user string, payload []byte) ([]byte, int, string)
-        PutDoc(dbName string, docpath string, docname string, payload []byte, overwrite bool, user string) ([]byte, int, string)
-        PutCol(dtb string, colpath string) ([]byte, int, string)
-        CreateDB(dbName string) ([]byte, int, string)
+        PostDoc(dbName string, colpath string, user string, payload []byte) ([]byte, int, string) //PostDoc should create a new document in the collection at the provided path
+        PutDoc(dbName string, docpath string, docname string, payload []byte, overwrite bool, user string) ([]byte, int, string) // PutDoc should create a new document at the provided path
+        PutCol(dtb string, colpath string) ([]byte, int, string) //PutCol should create a new collection at the provided path
+        CreateDB(dbName string) ([]byte, int, string) // CreateDB should create a new database with the provided name
 }
 
+// resourceGetter is an interface that defines the methods for retrieving resources from OwlDB.
 type resourceGetter interface {
-        GetDoc(dtb string, pathstr string, subscription bool) (response []byte, statCode int, subCh *chan []byte, id string, docEvent []byte)
+        GetDoc(dtb string, pathstr string, subscription bool) (response []byte, statCode int, subCh *chan []byte, id string, docEvent []byte) //GetDoc should retrieve the document at the provided path
 
-        GetCol(dtb string, colpath string, lower string, upper string, mode bool) (payload []byte, statCode int, subChan *chan []byte, subId string, docEvents [][]byte)
+        GetCol(dtb string, colpath string, lower string, upper string, mode bool) (payload []byte, statCode int, subChan *chan []byte, subId string, docEvents [][]byte) //GetCol should retrieve the collection at the provided path
 }
 
+// resourceDeleter is an interface that defines the methods for deleting resources from OwlDB.
 type resourceDeleter interface {
-        DeleteCol(dtb string, colpath string) ([]byte, int)
-        DeleteDoc(dbName string, docpath string) ([]byte, int)
-        DeleteDB(dbName string) ([]byte, int)
+        DeleteCol(dtb string, colpath string) ([]byte, int) //DeleteCol should delete the collection at the provided path
+        DeleteDoc(dbName string, docpath string) ([]byte, int) //DeleteDoc should delete the document at the provided path
+        DeleteDB(dbName string) ([]byte, int) // DeleteDB should delete the database with the provided name
 }
 
+// resourcePatcher is an interface that defines the methods for patching resources in OwlDB.
 type resourcePatcher interface {
-        PatchDoc(dtb string, docpath string, patches []byte, user string) ([]byte, int, string)
+        PatchDoc(dtb string, docpath string, patches []byte, user string) ([]byte, int, string) //PatchDoc should apply the provided patches to the document at the provided path
 }
 
 // DbHarness serves as a structure that exposes the resource services to HTTP endpoints
@@ -4296,7 +4342,9 @@ func authOptionsHandler(w http.ResponseWriter, r *http.Request) <span class="cov
 }</span>
 </pre>
 		
-		<pre class="file" id="file24" style="display: none">package server
+		<pre class="file" id="file24" style="display: none">// Package server process and validate HTTP requests for the OwlDB project.
+// It includes helper functions for handling responses, parsing headers, validating input parameters, and preprocessing requests.
+package server
 
 import (
         "encoding/json"
@@ -4308,25 +4356,7 @@ import (
         "strings"
 )
 
-//type muxForwarder struct {
-//        mux *http.ServeMux
-//}
-//
-//func (mF *muxForwarder) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-//        handler, match := mF.mux.Handler(r)
-//        if match != r.URL.Path {
-//                emsg, _ := json.Marshal("Bad Resource Path")
-//                writeResponse(w, http.StatusBadRequest, emsg)
-//                return
-//        }
-//        if match == "" {
-//                emsg, _ := json.Marshal("Bad Resource Path")
-//                writeResponse(w, http.StatusBadRequest, emsg)
-//                return
-//        }
-//        handler.ServeHTTP(w, r)
-//}
-
+// writeResponse writes a response with appropriate headers
 func writeResponse(w http.ResponseWriter, code int, response []byte) <span class="cov8" title="1">{
         if code != http.StatusNoContent </span><span class="cov8" title="1">{
                 w.Header().Set("Content-Type", "application/json")
@@ -4340,14 +4370,7 @@ func writeResponse(w http.ResponseWriter, code int, response []byte) <span class
 
 }
 
-func writeError(w http.ResponseWriter, code int, err error) <span class="cov8" title="1">{
-        w.Header().Set("Access-Control-Allow-Origin", "*")
-        w.WriteHeader(code)
-        //w.Header().Set("Content-Type", "application/json")
-        w.Header().Set("Access-Control-Allow-Origin", "*")
-        w.Write([]byte(err.Error()))
-}</span>
-
+// parses out bearer token
 func extractToken(header http.Header) (string, error) <span class="cov8" title="1">{
         authHeader := header.Get("Authorization")
         if authHeader == "" </span><span class="cov8" title="1">{
@@ -4362,6 +4385,7 @@ func extractToken(header http.Header) (string, error) <span class="cov8" title="
         <span class="cov8" title="1">return token, nil</span>
 }
 
+// validates Bounds for query params
 func validateBounds(param string) bool <span class="cov8" title="1">{
         pattern := "^(\\[|\\()[^[\\]()]*,[^[\\]()]*(\\]|\\))$"
         match, err := regexp.MatchString(pattern, param)
@@ -4374,6 +4398,7 @@ func validateBounds(param string) bool <span class="cov8" title="1">{
         <span class="cov8" title="1">return false</span>
 }
 
+// validateSubscribe validates the subscribe query field
 func validateSubscribe(param string) bool <span class="cov8" title="1">{
         pattern := "^(no)?subscribe$"
         match, err := regexp.MatchString(pattern, param)
@@ -4386,6 +4411,7 @@ func validateSubscribe(param string) bool <span class="cov8" title="1">{
         <span class="cov8" title="1">return false</span>
 }
 
+// validateOverwrite checks that overwrite is a correct
 func validateOverwrite(param string) bool <span class="cov8" title="1">{
         pattern := "^(no)?overwrite$"
         match, err := regexp.MatchString(pattern, param)
@@ -4399,6 +4425,7 @@ func validateOverwrite(param string) bool <span class="cov8" title="1">{
         <span class="cov8" title="1">return true</span>
 }
 
+// validateColPath validates the collection path
 func validateColPath(colpath string) error <span class="cov8" title="1">{
         if colpath == "" </span><span class="cov8" title="1">{
                 return nil
@@ -4413,6 +4440,7 @@ func validateColPath(colpath string) error <span class="cov8" title="1">{
         <span class="cov8" title="1">return nil</span>
 }
 
+// requestPreprocessor preprocesses requests, ensuring that no double slashes occur
 func requestPreprocessor(mx http.Handler) http.Handler <span class="cov8" title="1">{
         return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) </span><span class="cov8" title="1">{
                 if r.Method == "OPTIONS" </span><span class="cov8" title="1">{
@@ -4454,6 +4482,7 @@ func validatePutColPath(path string) error <span class="cov8" title="1">{
         <span class="cov8" title="1">return nil</span>
 }
 
+// parseResourcePath parses the resource path
 func parseResourcePath(path string) (database string, resourcePath string) <span class="cov8" title="1">{
         splitPath := strings.Split(path, "/")
         if len(splitPath) == 1 </span><span class="cov8" title="1">{
@@ -4463,6 +4492,7 @@ func parseResourcePath(path string) (database string, resourcePath string) <span
         return splitPath[0], resourcePath</span>
 }
 
+// validateDocPath validates that the path is to a valid document
 func validateDocPath(docpath string) error <span class="cov8" title="1">{
         if docpath == "" </span><span class="cov8" title="1">{
                 return fmt.Errorf("bad resource path")
@@ -4626,7 +4656,10 @@ func (c *ColSubscriptionManager) GenerateEvent(evType string, payload []byte) []
 }
 </pre>
 		
-		<pre class="file" id="file26" style="display: none">package subscriptionManager
+		<pre class="file" id="file26" style="display: none">// Package subscriptionManager manages subscriptions to documents and enables real-time notifications to clients
+// when documents are updated. It provides the necessary structures to add subscribers, notify them of changes, 
+// and maintain these active subscriptions within a Messager object.
+package subscriptionManager
 
 import (
         "fmt"
@@ -4634,6 +4667,7 @@ import (
         "log/slog"
 )
 
+// SubscriptionManager manages a list of subscribers to a document
 type UriToDocs[uri string, docSubs *SubscriptionManager] interface {
         Upsert(key string, check index_utils.UpdateCheck[uri, docSubs]) (updated bool, err error) // Upserts (inserts or updates) a subscriber.
         Find(key string) (foundDsm *SubscriptionManager, found bool)
@@ -4641,18 +4675,19 @@ type UriToDocs[uri string, docSubs *SubscriptionManager] interface {
 
 // Messager contains all active subscriptions
 type Messager struct {
-        idtosubfactory IdToSubFactory
-
-        docSubs UriToDocs[string, *SubscriptionManager]
+        idtosubfactory IdToSubFactory // Factory function for creating a new IdToSub
+        docSubs UriToDocs[string, *SubscriptionManager] // Map of document URIs to their SubscriptionManagers
 }
 
 // IdToSubFactory is a factory function for
 type IdToSubFactory func() IdToSub[string, *chan []byte]
 
+// NewMessager creates a new Messager instance with the given IdToSubFactory and UriToDocs.
+// It returns a pointer to the new Messager.
 func NewMessager(idtosubfactory IdToSubFactory, docsubs UriToDocs[string, *SubscriptionManager]) *Messager <span class="cov8" title="1">{
         return &amp;Messager{
-                idtosubfactory: idtosubfactory,
-                docSubs:        docsubs,
+                idtosubfactory: idtosubfactory, // Factory function for creating a new IdToSub
+                docSubs:        docsubs, // Map of document URIs to their SubscriptionManagers
         }
 }</span>
 
@@ -4813,9 +4848,8 @@ import (
 )
 
 // Validator holds a compiled JSON schema for validation
-
 type Validator struct {
-        schema *jsonschema.Schema
+        schema *jsonschema.Schema 
 }
 
 // New creates a new instance of Validator by compiling the provided JSON schema file.

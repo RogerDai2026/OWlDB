@@ -279,6 +279,7 @@ func TestDoubleUpsert(t *testing.T) {
 	wg.Wait()
 }
 
+// tests that these routines do not deadlock
 func TestConcurrentUpdateDelete(t *testing.T) {
 	var wg sync.WaitGroup
 
@@ -293,6 +294,7 @@ func TestConcurrentUpdateDelete(t *testing.T) {
 	wg.Wait()
 }
 
+// tests that an upsert call that fails correctly returns an error
 func TestUpsertFailIfNotExist(t *testing.T) {
 	sl := NewSL[int, string](-1, 200)
 	sl.Upsert(1, checkFactory[int, string]("abc"))

@@ -11,9 +11,8 @@ import (
 )
 
 // Validator holds a compiled JSON schema for validation
-
 type Validator struct {
-	schema *jsonschema.Schema
+	schema *jsonschema.Schema 
 }
 
 // New creates a new instance of Validator by compiling the provided JSON schema file.

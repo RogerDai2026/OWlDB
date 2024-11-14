@@ -1,3 +1,5 @@
+// This package supports document and collection retrieval, streaming server-sent events (SSE) for subscribers, 
+// and request preprocessing for validation and token extraction.
 package server
 
 import (
@@ -10,13 +12,16 @@ import (
 	"time"
 )
 
-// a writeFlusher is the composition of an http.ResponseWriter and the http.Flusher. Needed for SSEs
+// writeFlusher is an interface that composes http.ResponseWriter and http.Flusher. 
+// It is used for Server-Sent Events (SSE) to send event data and flush/send the response to the client.
 type writeFlusher interface {
-	http.ResponseWriter
-	http.Flusher
+	http.ResponseWriter // write response to client 
+	http.Flusher //  flush response to client
 }
 
-// getHandler dispatches get requests depending on whether they end with a /
+// getHandler is responsible for dispatching GET requests based on the URL path structure.
+// If the path represents a document, it delegates to getDocHandler. If it represents a collection, 
+// it delegates to getColHandler. If the path is malformed, it returns a 400 Bad Request response.
 func (dbh *DbHarness) getHandler(w http.ResponseWriter, r *http.Request) {
 	resource := r.PathValue("resource")
 	if len(resource) == 0 {
@@ -36,7 +41,8 @@ func (dbh *DbHarness) getHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// getDocHandler handles get requests made to documents
+// getDocHandler handles requests made to retrieve documents in the database.
+// It extracts and validates the Bearer token, validates the document path, and handles subscription requests.
 func (dbh *DbHarness) getDocHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	patherr := validateUrl(r.URL.Path)
@@ -46,6 +52,7 @@ func (dbh *DbHarness) getDocHandler(w http.ResponseWriter, r *http.Request) {
 		writeResponse(w, http.StatusBadRequest, errmsg)
 		return
 	}
+	// Extract and validate the Bearer token
 	token, err := extractToken(r.Header)
 	if err != nil {
 		ermsg, _ := json.Marshal("Missing or invalid bearer token")
@@ -69,7 +76,7 @@ func (dbh *DbHarness) getDocHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
+    // Parse the document path and validate
 	path := r.PathValue("resource")
 	dtb, docpath := parseResourcePath(path)
 	err = validateDocPath(docpath)
@@ -82,11 +89,14 @@ func (dbh *DbHarness) getDocHandler(w http.ResponseWriter, r *http.Request) {
 		writeResponse(w, http.StatusBadRequest, errmsg)
 		return
 	}
+
+	// Retrieve the document and handle the response or subscription
 	response, status, subChan, _, docEv := dbh.rg.GetDoc(dtb, docpath, subscribe)
 	if status != http.StatusOK {
 		writeResponse(w, status, response)
 		return
 	}
+	// If subscription is requested, send events via SSE
 	if subscribe && status == http.StatusOK {
 		wf, ok := w.(writeFlusher)
 		if !ok {
@@ -105,7 +115,7 @@ func (dbh *DbHarness) getDocHandler(w http.ResponseWriter, r *http.Request) {
 
 		slog.Info("Sending", "msg", evt.String())
 
-		// Send event
+		// Continuously send events or keep the connection alive
 		wf.Write(evt.Bytes())
 		wf.Flush()
 		ticker := time.NewTicker(15 * time.Second)
@@ -136,7 +146,8 @@ func (dbh *DbHarness) getDocHandler(w http.ResponseWriter, r *http.Request) {
 	writeResponse(w, status, response)
 }
 
-// getColHandler handles requests to collections
+// getColHandler handles requests made to retrieve collections in the database.
+// It extracts and validates the Bearer token, validates the collection path, and handles subscription requests.
 func (dbh *DbHarness) getColHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	slog.Info(fmt.Sprintf("Request headers: %+v", r.Context()))

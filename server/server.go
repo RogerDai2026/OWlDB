@@ -1,4 +1,4 @@
-// Package server Description: This file contains the implementation of the HTTP server that serves the API.
+// This file contains the implementation of the HTTP server that serves the API.
 package server
 
 import (
@@ -6,27 +6,31 @@ import (
 	"net/http"
 )
 
+// resourceCreator is an interface that defines the methods for creating resources in OwlDB.
 type resourceCreator interface {
-	PostDoc(dbName string, colpath string, user string, payload []byte) ([]byte, int, string)
-	PutDoc(dbName string, docpath string, docname string, payload []byte, overwrite bool, user string) ([]byte, int, string)
-	PutCol(dtb string, colpath string) ([]byte, int, string)
-	CreateDB(dbName string) ([]byte, int, string)
+	PostDoc(dbName string, colpath string, user string, payload []byte) ([]byte, int, string) //PostDoc should create a new document in the collection at the provided path
+	PutDoc(dbName string, docpath string, docname string, payload []byte, overwrite bool, user string) ([]byte, int, string) // PutDoc should create a new document at the provided path
+	PutCol(dtb string, colpath string) ([]byte, int, string) //PutCol should create a new collection at the provided path
+	CreateDB(dbName string) ([]byte, int, string) // CreateDB should create a new database with the provided name
 }
 
+// resourceGetter is an interface that defines the methods for retrieving resources from OwlDB.
 type resourceGetter interface {
-	GetDoc(dtb string, pathstr string, subscription bool) (response []byte, statCode int, subCh *chan []byte, id string, docEvent []byte)
+	GetDoc(dtb string, pathstr string, subscription bool) (response []byte, statCode int, subCh *chan []byte, id string, docEvent []byte) //GetDoc should retrieve the document at the provided path
 
-	GetCol(dtb string, colpath string, lower string, upper string, mode bool) (payload []byte, statCode int, subChan *chan []byte, subId string, docEvents [][]byte)
+	GetCol(dtb string, colpath string, lower string, upper string, mode bool) (payload []byte, statCode int, subChan *chan []byte, subId string, docEvents [][]byte) //GetCol should retrieve the collection at the provided path
 }
 
+// resourceDeleter is an interface that defines the methods for deleting resources from OwlDB.
 type resourceDeleter interface {
-	DeleteCol(dtb string, colpath string) ([]byte, int)
-	DeleteDoc(dbName string, docpath string) ([]byte, int)
-	DeleteDB(dbName string) ([]byte, int)
+	DeleteCol(dtb string, colpath string) ([]byte, int) //DeleteCol should delete the collection at the provided path
+	DeleteDoc(dbName string, docpath string) ([]byte, int) //DeleteDoc should delete the document at the provided path
+	DeleteDB(dbName string) ([]byte, int) // DeleteDB should delete the database with the provided name
 }
 
+// resourcePatcher is an interface that defines the methods for patching resources in OwlDB.
 type resourcePatcher interface {
-	PatchDoc(dtb string, docpath string, patches []byte, user string) ([]byte, int, string)
+	PatchDoc(dtb string, docpath string, patches []byte, user string) ([]byte, int, string) //PatchDoc should apply the provided patches to the document at the provided path
 }
 
 // DbHarness serves as a structure that exposes the resource services to HTTP endpoints

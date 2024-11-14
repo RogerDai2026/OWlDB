@@ -1,3 +1,5 @@
+// Package server process and validate HTTP requests for the OwlDB project.
+// It includes helper functions for handling responses, parsing headers, validating input parameters, and preprocessing requests.
 package server
 
 import (
