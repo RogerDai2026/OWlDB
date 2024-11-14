@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Document Schema",
+  "type": "object",
+  "properties": {
+    "path": {
+      "type": "string"
+    },
+    "doc": {
+      "type": "object",
+      "description": "Document content"
+    }
+
+  },
+  "required": ["path", "doc", "meta"]
+}

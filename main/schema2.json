@@ -1,0 +1,123 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "definitions": {
+      "login": {
+        "type": "object",
+        "description": "Schema for login requests.",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Username for login."
+          }
+        },
+        "required": ["username"]
+      },
+      "token": {
+        "type": "object",
+        "description": "Bearer token.",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The token string."
+          }
+        },
+        "required": ["token"]
+      },
+      "document": {
+        "description": "Schema for documents stored in the system.",
+        "type": "object",
+        "additionalProperties": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "number" },
+            { "type": "boolean" },
+            {
+              "type": "object",
+              "additionalProperties": {
+                "oneOf": [
+                  { "type": "string" },
+                  { "type": "number" },
+                  { "type": "boolean" },
+                  {
+                    "type": "object",
+                    "additionalProperties": {
+                      "oneOf": [
+                        { "type": "string" },
+                        { "type": "number" },
+                        { "type": "boolean" }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "documents": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "path": { "type": "string" },
+            "doc": { "$ref": "#/definitions/document" }
+          },
+          "required": ["path", "doc"]
+        }
+      },
+      "meta": {
+        "type": "object",
+        "description": "Metadata about a document",
+        "properties": {
+          "createdAt": { "type": "number" },
+          "createdBy": { "type": "string" },
+          "lastModifiedAt": { "type": "number" },
+          "lastModifiedBy": { "type": "string" }
+        },
+        "required": ["createdAt", "createdBy", "lastModifiedAt", "lastModifiedBy"]
+      },
+      "patch": {
+        "type": "object",
+        "properties": {
+          "op": {
+            "type": "string",
+            "pattern": "^(ArrayAdd|ArrayRemove|ObjectAdd)$",
+            "description": "Patch operation name"
+          },
+          "path": {
+            "type": "string",
+            "description": "JSON pointer to element to patch"
+          },
+          "value": {
+            "description": "JSON encoded value for patch operation"
+          }
+        },
+        "required": ["op", "path", "value"]
+      },
+      "patchResult": {
+        "type": "object",
+        "properties": {
+          "uri": { "type": "string", "description": "URI of resource" },
+          "patchFailed": { "type": "boolean" },
+          "message": { "type": "string" }
+        },
+        "required": ["uri", "patchFailed", "message"]
+      },
+      "uri": {
+        "type": "string",
+        "description": "URI of resource"
+      }
+    },
+
+    "type": "object",
+    "properties": {
+      "login": { "$ref": "#/definitions/login" },
+      "token": { "$ref": "#/definitions/token" },
+      "document": { "$ref": "#/definitions/document" },
+      "documents": { "$ref": "#/definitions/documents" },
+      "meta": { "$ref": "#/definitions/meta" },
+      "patch": { "$ref": "#/definitions/patch" },
+      "patchResult": { "$ref": "#/definitions/patchResult" }
+    }
+  }
+  
